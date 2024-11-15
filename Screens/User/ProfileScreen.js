@@ -11,14 +11,14 @@ import {
   SafeAreaView,
   TextInput,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import uploadImage from '../../services/Cloudinary';
 import LinearGradient from 'react-native-linear-gradient';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import auth from '@react-native-firebase/auth';
-import { launchImageLibrary } from 'react-native-image-picker';
-
+import {launchImageLibrary} from 'react-native-image-picker';
 
 const ShimmerButton = ({title, onPress, style, textStyle, colors}) => (
   <TouchableOpacity onPress={onPress} style={[styles.button, style]}>
@@ -68,8 +68,12 @@ export default function ProfileScreen() {
   const handleLogout = () => {
     auth()
       .signOut()
-      .then(() => {
+      .then(async () => {
         console.log('User signed out!');
+
+        // Remove the userToken from AsyncStorage
+        await AsyncStorage.removeItem('userToken');
+
         navigation.navigate('Login');
       })
       .catch(error => {
@@ -96,19 +100,21 @@ export default function ProfileScreen() {
     });
   };
 
-
+  const handleLogin = () => {
+    navigation.navigate('Login');
+  };
 
   const handleSaveProfile = async () => {
     const firebaseUser = auth().currentUser;
-  
+
     if (firebaseUser) {
       let updateObject = {};
-  
+
       // Only update display name if it's changed
       if (newDisplayName !== firebaseUser.displayName) {
         updateObject.displayName = newDisplayName;
       }
-  
+
       // Only update avatar if it's changed
       if (newAvatarUri && newAvatarUri !== firebaseUser.photoURL) {
         try {
@@ -118,11 +124,14 @@ export default function ProfileScreen() {
           }
         } catch (error) {
           console.log('Error uploading image: ', error);
-          Alert.alert('Error', 'Failed to upload avatar image. Please try again.');
+          Alert.alert(
+            'Error',
+            'Failed to upload avatar image. Please try again.',
+          );
           return;
         }
       }
-  
+
       // Update user profile if there's any change
       if (Object.keys(updateObject).length > 0) {
         firebaseUser
@@ -220,19 +229,31 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.buttonContainer}>
-              <ShimmerButton
-                title={isEditing ? 'Save Changes' : 'Edit Profile'}
-                onPress={isEditing ? handleSaveProfile : handleEditProfile}
-                style={styles.editButton}
-                colors={['#4facfe', '#00f2fe']}
-              />
-              <ShimmerButton
-                title="Logout"
-                onPress={handleLogout}
-                style={styles.logoutButton}
-                textStyle={styles.logoutButtonText}
-                colors={['#E76F51', '#F4A261']}
-              />
+              {authUser ? (
+                <>
+                  <ShimmerButton
+                    title={isEditing ? 'Save Changes' : 'Edit Profile'}
+                    onPress={isEditing ? handleSaveProfile : handleEditProfile}
+                    style={styles.editButton}
+                    colors={['#4facfe', '#00f2fe']}
+                  />
+                  <ShimmerButton
+                    title="Logout"
+                    onPress={handleLogout}
+                    style={styles.logoutButton}
+                    textStyle={styles.logoutButtonText}
+                    colors={['#E76F51', '#F4A261']}
+                  />
+                </>
+              ) : (
+                <ShimmerButton
+                  title="Login"
+                  onPress={handleLogin}
+                  style={styles.logoutButton}
+                  textStyle={styles.logoutButtonText}
+                  colors={['#E76F51', '#F4A261']}
+                />
+              )}
             </View>
           </View>
         </Animated.View>

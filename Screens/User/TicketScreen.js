@@ -1,133 +1,163 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   Image,
   TouchableOpacity,
-  Alert,
   SafeAreaView,
   Dimensions,
+  Animated,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
+import { BlurView } from '@react-native-community/blur';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-const eventData = {
-  id: '1',
-  name: 'TechConf 2024',
-  date: 'June 15-17, 2024',
-  location: 'San Francisco, CA',
-  image: 'https://images.pexels.com/photos/15262989/pexels-photo-15262989/free-photo-of-closeup-of-an-illuminated-analogue-sound-mixer.jpeg?auto=compress&cs=tinysrgb&w=600',
-  description: 'Join us for the biggest tech conference of the year, featuring keynotes from industry leaders, hands-on workshops, and networking opportunities.',
-  ticketTypes: [
-    { id: '1', name: 'General Admission', price: 299 },
-    { id: '2', name: 'VIP Access', price: 599 },
-    { id: '3', name: 'Workshop Pass', price: 199 },
-  ],
-};
+const tickets = [
+  {
+    id: '1',
+    eventName: 'TechConf 2024',
+    date: 'June 15-17, 2024',
+    location: 'San Francisco, CA',
+    image: 'https://images.pexels.com/photos/2774556/pexels-photo-2774556.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    price: 299,
+    category: 'TECH',
+  },
+  {
+    id: '2',
+    eventName: 'Music Festival',
+    date: 'July 20-22, 2024',
+    location: 'Austin, TX',
+    image: 'https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    price: 199,
+    category: 'MUSIC',
+  },
+  {
+    id: '3',
+    eventName: 'Food & Wine Expo',
+    date: 'August 5-7, 2024',
+    location: 'New York, NY',
+    image: 'https://images.pexels.com/photos/1267696/pexels-photo-1267696.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    price: 149,
+    category: 'FOOD',
+  },
+];
 
 const TicketScreen = () => {
   const navigation = useNavigation();
-  const [selectedTickets, setSelectedTickets] = useState({});
-  const [isProcessing, setIsProcessing] = useState(false);
+  const scrollY = new Animated.Value(0);
+  const [selectedCategory, setSelectedCategory] = useState('ALL');
 
-  const handleTicketSelection = (ticketId, quantity) => {
-    setSelectedTickets(prev => ({
-      ...prev,
-      [ticketId]: Math.max(0, quantity),
-    }));
+  const categories = ['ALL', 'TECH', 'MUSIC', 'FOOD'];
+
+  const filteredTickets = selectedCategory === 'ALL' 
+    ? tickets 
+    : tickets.filter(ticket => ticket.category === selectedCategory);
+
+  const renderTicketItem = ({ item, index }) => {
+    const inputRange = [
+      -1,
+      0,
+      (150 + 32) * index,
+      (150 + 32) * (index + 2)
+    ];
+
+    const scale = scrollY.interpolate({
+      inputRange,
+      outputRange: [1, 1, 1, 0.8],
+    });
+
+    const opacity = scrollY.interpolate({
+      inputRange,
+      outputRange: [1, 1, 1, 0.5],
+    });
+
+    return (
+      <Animated.View style={[
+        styles.ticketItem,
+        { transform: [{ scale }], opacity }
+      ]}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('TicketDetail', { ticketId: item.id })}
+          activeOpacity={0.8}
+        >
+          <Image source={{ uri: item.image }} style={styles.ticketImage} />
+          <LinearGradient
+            colors={['rgba(138, 43, 226, 0.7)', 'rgba(75, 0, 130, 0.95)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.ticketContent}
+          >
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryText}>{item.category}</Text>
+            </View>
+            <Text style={styles.eventName}>{item.eventName}</Text>
+            <View style={styles.infoContainer}>
+              <Icon name="calendar" size={14} color="#E6E6FA" />
+              <Text style={styles.eventInfo}>{item.date}</Text>
+            </View>
+            <View style={styles.infoContainer}>
+              <Icon name="map-pin" size={14} color="#E6E6FA" />
+              <Text style={styles.eventInfo}>{item.location}</Text>
+            </View>
+            <View style={styles.priceContainer}>
+              <Text style={styles.price}>${item.price}</Text>
+              <TouchableOpacity style={styles.buyButton}>
+                <Text style={styles.buyButtonText}>BUY NOW</Text>
+                <Icon name="chevron-right" size={20} color="#4B0082" />
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
+    );
   };
 
-  const calculateTotal = () => {
-    return Object.entries(selectedTickets).reduce((total, [ticketId, quantity]) => {
-      const ticket = eventData.ticketTypes.find(t => t.id === ticketId);
-      return total + (ticket ? ticket.price * quantity : 0);
-    }, 0);
-  };
-
-  const handleCheckout = () => {
-    setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
-      Alert.alert(
-        'Purchase Successful',
-        'Your tickets have been booked successfully!',
-        [{ text: 'OK', onPress: () => navigation.goBack() }]
-      );
-    }, 2000);
-  };
+  const renderCategoryItem = (category) => (
+    <TouchableOpacity
+      key={category}
+      style={[
+        styles.categoryItem,
+        selectedCategory === category && styles.categoryItemActive
+      ]}
+      onPress={() => setSelectedCategory(category)}
+    >
+      <Text style={[
+        styles.categoryItemText,
+        selectedCategory === category && styles.categoryItemTextActive
+      ]}>
+        {category}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
-        <LinearGradient colors={['#4FD1C5', '#2B6CB0']} style={styles.headerGradient}>
-          <Image source={{ uri: eventData.image }} style={styles.eventImage} />
-          <View style={styles.eventDetails}>
-            <Text style={styles.eventName}>{eventData.name}</Text>
-            <Text style={styles.eventInfo}>{eventData.date}</Text>
-            <Text style={styles.eventInfo}>{eventData.location}</Text>
-          </View>
-        </LinearGradient>
+      <LinearGradient
+        colors={['#8A2BE2', '#4B0082']}
+        style={styles.header}
+      >
+        <Text style={styles.headerTitle}>Available Tickets</Text>
+      </LinearGradient>
 
-        <View style={styles.descriptionContainer}>
-          <Text style={styles.eventDescription}>{eventData.description}</Text>
-        </View>
+      <View style={styles.categoriesContainer}>
+        {categories.map(renderCategoryItem)}
+      </View>
 
-        <View style={styles.ticketSection}>
-          <Text style={styles.sectionTitle}>Select Tickets</Text>
-          {eventData.ticketTypes.map((ticket, index) => (
-            <LinearGradient
-              key={ticket.id}
-              colors={['#6EE7B7', '#3B82F6']}
-              style={[styles.ticketItem, { backgroundColor: index % 2 === 0 ? '#E0F7FA' : '#E3F2FD' }]}
-            >
-              <View>
-                <Text style={styles.ticketName}>{ticket.name}</Text>
-                <Text style={styles.ticketPrice}>${ticket.price}</Text>
-              </View>
-              <View style={styles.quantityControl}>
-                <TouchableOpacity
-                  onPress={() => handleTicketSelection(ticket.id, (selectedTickets[ticket.id] || 0) - 1)}
-                  style={[styles.quantityButton, { backgroundColor: '#EF4444' }]}
-                >
-                  <Icon name="minus" size={20} color="#fff" />
-                </TouchableOpacity>
-                <Text style={styles.quantityText}>{selectedTickets[ticket.id] || 0}</Text>
-                <TouchableOpacity
-                  onPress={() => handleTicketSelection(ticket.id, (selectedTickets[ticket.id] || 0) + 1)}
-                  style={[styles.quantityButton, { backgroundColor: '#10B981' }]}
-                >
-                  <Icon name="plus" size={20} color="#fff" />
-                </TouchableOpacity>
-              </View>
-            </LinearGradient>
-          ))}
-        </View>
-
-        <LinearGradient colors={['#38A169', '#2C7A7B']} style={styles.totalSection}>
-          <Text style={styles.totalText}>Total: ${calculateTotal()}</Text>
-        </LinearGradient>
-
-        <TouchableOpacity
-          onPress={handleCheckout}
-          disabled={calculateTotal() === 0 || isProcessing}
-          style={styles.checkoutButtonContainer}
-        >
-          <LinearGradient
-            colors={calculateTotal() === 0 || isProcessing ? ['#E2E8F0', '#CBD5E0'] : ['#38B2AC', '#3182CE']}
-            style={styles.checkoutButton}
-          >
-            <Text style={styles.checkoutButtonText}>
-              {isProcessing ? 'Processing...' : 'Proceed to Checkout'}
-            </Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </ScrollView>
+      <Animated.FlatList
+        data={filteredTickets}
+        renderItem={renderTicketItem}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.ticketList}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+      />
     </SafeAreaView>
   );
 };
@@ -135,123 +165,122 @@ const TicketScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#1A1A1A',
   },
-  scrollContent: {
-    paddingBottom: 80,
+  header: {
+    padding: 20,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E6E6FA',
   },
-  headerGradient: {
-    paddingBottom: 30,
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    letterSpacing: 1,
   },
-  eventImage: {
-    width: '100%',
-    height: 220,
-  },
-  eventDetails: {
+  categoriesContainer: {
+    flexDirection: 'row',
     padding: 16,
+    justifyContent: 'space-between',
+  },
+  categoryItem: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#8A2BE2',
+  },
+  categoryItemActive: {
+    backgroundColor: '#8A2BE2',
+  },
+  categoryItemText: {
+    color: '#8A2BE2',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  categoryItemTextActive: {
+    color: '#FFFFFF',
+  },
+  ticketList: {
+    padding: 16,
+  },
+  ticketItem: {
+    marginBottom: 24,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#8A2BE2',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  ticketImage: {
+    width: '100%',
+    height: 200,
+    resizeMode: 'cover',
+  },
+  ticketContent: {
+    padding: 16,
+  },
+  categoryBadge: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    backgroundColor: 'rgba(138, 43, 226, 0.2)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E6E6FA',
+  },
+  categoryText: {
+    color: '#E6E6FA',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   eventName: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: 'bold',
     color: '#FFFFFF',
+    marginBottom: 12,
+    textShadowColor: '#8A2BE2',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  infoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
   },
   eventInfo: {
-    fontSize: 16,
-    color: '#FFFFFF',
+    fontSize: 14,
+    color: '#E6E6FA',
+    marginLeft: 8,
   },
-  descriptionContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    margin: 16,
-    padding: 16,
-    elevation: 2,
-  },
-  eventDescription: {
-    fontSize: 16,
-    color: '#4A5568',
-  },
-  ticketSection: {
-    marginHorizontal: 16,
-    marginBottom: 24,
-    padding: 16,
-    borderRadius: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1A202C',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  ticketItem: {
+  priceContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
+    marginTop: 16,
   },
-  ticketName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2D3748',
+  price: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#E6E6FA',
   },
-  ticketPrice: {
-    fontSize: 14,
-    color: '#718096',
-  },
-  quantityControl: {
+  buyButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#E6E6FA',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
   },
-  quantityButton: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    marginHorizontal: 8,
-  },
-  quantityText: {
-    fontSize: 16,
-    color: '#2D3748',
-  },
-  totalSection: {
-    marginHorizontal: 16,
-    marginBottom: 24,
-    padding: 16,
-    borderRadius: 10,
-  },
-  totalText: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  checkoutButtonContainer: {
-    marginHorizontal: 16,
-    marginBottom: 32,
-  },
-  checkoutButton: {
-    borderRadius: 25,
-    paddingVertical: 14,
-  },
-  checkoutButtonText: {
-    fontSize: 18,
-    fontWeight: '700',
-    textAlign: 'center',
-    color: '#FFFFFF',
+  buyButtonText: {
+    color: '#4B0082',
+    fontWeight: 'bold',
+    marginRight: 4,
   },
 });
 
