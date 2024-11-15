@@ -87,7 +87,7 @@ const TicketScreen = () => {
         >
           <Image source={{ uri: item.image }} style={styles.ticketImage} />
           <LinearGradient
-            colors={['rgba(138, 43, 226, 0.7)', 'rgba(75, 0, 130, 0.95)']}
+            colors={['rgba(0, 255, 255, 0.15)', 'rgba(128, 0, 255, 0.85)']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.ticketContent}
@@ -97,18 +97,18 @@ const TicketScreen = () => {
             </View>
             <Text style={styles.eventName}>{item.eventName}</Text>
             <View style={styles.infoContainer}>
-              <Icon name="calendar" size={14} color="#E6E6FA" />
+              <Icon name="calendar" size={14} color="#00FFFF" />
               <Text style={styles.eventInfo}>{item.date}</Text>
             </View>
             <View style={styles.infoContainer}>
-              <Icon name="map-pin" size={14} color="#E6E6FA" />
+              <Icon name="map-pin" size={14} color="#00FFFF" />
               <Text style={styles.eventInfo}>{item.location}</Text>
             </View>
             <View style={styles.priceContainer}>
               <Text style={styles.price}>${item.price}</Text>
               <TouchableOpacity style={styles.buyButton}>
                 <Text style={styles.buyButtonText}>BUY NOW</Text>
-                <Icon name="chevron-right" size={20} color="#4B0082" />
+                <Icon name="chevron-right" size={20} color="#000000" />
               </TouchableOpacity>
             </View>
           </LinearGradient>
@@ -138,10 +138,11 @@ const TicketScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={['#8A2BE2', '#4B0082']}
+        colors={['#000000', '#1A1A1A']}
         style={styles.header}
       >
-        <Text style={styles.headerTitle}>Available Tickets</Text>
+        <Text style={styles.headerTitle}>Avaialable Tickets</Text>
+        
       </LinearGradient>
 
       <View style={styles.categoriesContainer}>
@@ -165,19 +166,25 @@ const TicketScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#000000',
   },
   header: {
     padding: 20,
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#E6E6FA',
+    borderBottomColor: '#00FFFF',
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: 'bold',
+    color: '#00FFFF',
+    letterSpacing: 8,
+  },
+  headerSubtitle: {
+    fontSize: 14,
     color: '#FFFFFF',
-    letterSpacing: 1,
+    letterSpacing: 4,
+    marginTop: 4,
   },
   categoriesContainer: {
     flexDirection: 'row',
@@ -189,18 +196,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#8A2BE2',
+    borderColor: '#00FFFF',
   },
   categoryItemActive: {
-    backgroundColor: '#8A2BE2',
+    backgroundColor: '#00FFFF',
   },
   categoryItemText: {
-    color: '#8A2BE2',
+    color: '#00FFFF',
     fontSize: 12,
     fontWeight: 'bold',
   },
   categoryItemTextActive: {
-    color: '#FFFFFF',
+    color: '#000000',
   },
   ticketList: {
     padding: 16,
@@ -210,7 +217,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     elevation: 8,
-    shadowColor: '#8A2BE2',
+    shadowColor: '#00FFFF',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -227,15 +234,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 16,
     right: 16,
-    backgroundColor: 'rgba(138, 43, 226, 0.2)',
+    backgroundColor: 'rgba(0, 255, 255, 0.2)',
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E6E6FA',
+    borderColor: '#00FFFF',
   },
   categoryText: {
-    color: '#E6E6FA',
+    color: '#00FFFF',
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -244,7 +251,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 12,
-    textShadowColor: '#8A2BE2',
+    textShadowColor: '#00FFFF',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 10,
   },
@@ -255,7 +262,7 @@ const styles = StyleSheet.create({
   },
   eventInfo: {
     fontSize: 14,
-    color: '#E6E6FA',
+    color: '#FFFFFF',
     marginLeft: 8,
   },
   priceContainer: {
@@ -267,18 +274,18 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#E6E6FA',
+    color: '#00FFFF',
   },
   buyButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E6E6FA',
+    backgroundColor: '#00FFFF',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
   },
   buyButtonText: {
-    color: '#4B0082',
+    color: '#000000',
     fontWeight: 'bold',
     marginRight: 4,
   },
